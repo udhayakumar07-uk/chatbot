@@ -1,6 +1,6 @@
 import google.generativeai as ai
 
-API_KEY = "AIzaSyBBfzigdlQcIu0ALWmMHCFAw0G_STpYYmo"
+API_KEY = "your_api_key"
 ai.configure(api_key=API_KEY)
 
 # Initialize Google AI Chat
