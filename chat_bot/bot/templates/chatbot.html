@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="title">AI Chatbot</div>
+        <div class="controls">
+            <button id="theme-toggle">🌙</button>
+            <div id="g_id_onload"
+                 data-client_id="1234567890-abcdefg.apps.googleusercontent.com"
+                 data-context="signin"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="medium"></div>
+        </div>
+    </div>
+    <div class="chat-container">
+        <div class="chat-header">Chat with AI</div>
+        <div class="chat-body" id="chat-body"></div>
+        <div class="chat-footer">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script>
+        const chatBody = document.getElementById("chat-body");
+        const messageInput = document.getElementById("message-input");
+        const sendBtn = document.getElementById("send-btn");
+        const themeToggle = document.getElementById("theme-toggle");
+        const body = document.body;
+
+        themeToggle.addEventListener("click", () => {
+            body.classList.toggle("light-mode");
+            themeToggle.textContent = body.classList.contains("light-mode") ? "🌞" : "🌙";
+        });
+
+        async function sendMessage() {
+            const userMessage = messageInput.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, true);
+            messageInput.value = "";
+
+            const response = await fetch("", {
+                method: "POST",
+                headers: { "X-CSRFToken": getCookie("csrftoken"), "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ message: userMessage }),
+            });
+
+            const data = await response.json();
+            addMessage(data.response, false);
+        }
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `chat-message ${isUser ? "user-message" : "bot-message"}`;
+            messageDiv.innerText = text;
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function handleCredentialResponse(response) {
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: new URLSearchParams({ credential: response.credential }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Login failed: " + data.error);
+                } else {
+                    alert(`Welcome, ${data.user.name} (${data.user.email})`);
+                }
+            })
+            .catch(err => {
+                console.error("Login error:", err);
+                alert("An error occurred during login.");
+            });
+        }
+    </script>
+</body>
+</html>
